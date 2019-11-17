@@ -1,0 +1,11 @@
+# Executables
+*.exe*
+
+# Local configurations
+.vscode
+
+# My drafts
+.drafts
+
+# Flex/bison temp files
+lex.yy.c*

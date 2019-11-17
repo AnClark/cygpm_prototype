@@ -1,0 +1,70 @@
+# This file was automatically generated at 2019-10-03 18:07:16 UTC.
+#
+# If you edit it, your edits will be discarded next time the file is
+# generated.
+#
+# See https://sourceware.org/cygwin-apps/setup.ini.html for a description
+# of the format.
+release: cygwin
+arch: x86_64
+setup-timestamp: 1570126036
+setup-minimum-version: 2.844
+setup-version: 2.897
+
+@ 2048-cli
+sdesc: "2048 game for terminal"
+ldesc: "A CLI version/engine of the game 2048 for your *NIX terminal."
+category: Games
+requires: cygwin libncursesw10
+version: 0.9.1-1
+install: x86_64/release/2048-cli/2048-cli-0.9.1-1.tar.xz 9548 b33704135031a4728b9ecf7fc72d53e661974f147420c4473eafe135d72eb102528bcb4889c645453b216355db4a9e17b6b63eb7578b7e9c9341c5f27a53f4e0
+source: x86_64/release/2048-cli/2048-cli-0.9.1-1-src.tar.xz 118896 363ab00a3db123bb4db69e313b63cbc5e70166afd4849e7ba5654b4ffc8d315b3c26233dca195f1f909d57a38dce0cc5b6e8523d72312072c1697bc3135812b7
+depends2: cygwin, libncursesw10
+
+@ 2048-cli-debuginfo
+sdesc: "Debug info for 2048-cli"
+ldesc: "This package contains files necessary for debugging the
+2048-cli package with gdb."
+category: Debug
+requires: cygwin-debuginfo
+version: 0.9.1-1
+install: x86_64/release/2048-cli/2048-cli-debuginfo/2048-cli-debuginfo-0.9.1-1.tar.xz 29620 5e43e19fd62e5ba6c8a732717875fdf7efaaddf4ab861bfc7a462e6a584c782a422d6f20397bfe513fbb925fc7cb7737a04530ca3a626a80602cb07917d1c7b0
+source: x86_64/release/2048-cli/2048-cli-0.9.1-1-src.tar.xz 118896 363ab00a3db123bb4db69e313b63cbc5e70166afd4849e7ba5654b4ffc8d315b3c26233dca195f1f909d57a38dce0cc5b6e8523d72312072c1697bc3135812b7
+depends2: cygwin-debuginfo
+
+@ 2048-qt
+sdesc: "2048 game for Qt/KDE"
+ldesc: "A clone of 2048 and variants, implemented in Qt."
+category: Games
+requires: cygwin libQt5Core5 libQt5Gui5 libQt5Quick5 libgcc1 libstdc++6 qt5-quickcontrols
+version: 0.1.6-1
+install: x86_64/release/2048-qt/2048-qt-0.1.6-1.tar.xz 1403056 2f92ea11f8ca0b692538fbc39510feb4da0c924aa77545c3db4c4242ed1fbfe15c91aeb14b04fe3160b6539042e9408291e91c553b02c33220b780695cb3e237
+source: x86_64/release/2048-qt/2048-qt-0.1.6-1-src.tar.xz 1822096 00e0e24aa089dcbc3b61c8fc632a8e4c94c37fda5c89cb769d1ac559a7afc7cbe29fcd645cf59880811b911d3bccd3cb6b5924bfe7fffe79190d406911bb66f7
+depends2: cygwin, libQt5Core5, libQt5Gui5, libQt5Quick5, libgcc1, libstdc++6, qt5-quickcontrols
+
+@ 2048-qt-debuginfo
+sdesc: "Debug info for 2048-qt"
+ldesc: "This package contains files necessary for debugging the
+2048-qt package with gdb."
+category: Debug
+requires: cygwin-debuginfo
+version: 0.1.6-1
+install: x86_64/release/2048-qt/2048-qt-debuginfo/2048-qt-debuginfo-0.1.6-1.tar.xz 2310736 d2154e1ddabad0bfb9f835fa6afa880d1abb34d41c15c5179237d719845461d46556f65959d79d7c610ea8b0521f74f1e94a4ace80e95b398911c53d269c8da6
+source: x86_64/release/2048-qt/2048-qt-0.1.6-1-src.tar.xz 1822096 00e0e24aa089dcbc3b61c8fc632a8e4c94c37fda5c89cb769d1ac559a7afc7cbe29fcd645cf59880811b911d3bccd3cb6b5924bfe7fffe79190d406911bb66f7
+depends2: cygwin-debuginfo
+
+@ 4ti2-debuginfo
+sdesc: "Debug info for 4ti2"
+ldesc: "This package contains files necessary for debugging the
+4ti2 package with gdb."
+category: Debug
+requires: cygwin-debuginfo
+version: 1.6.7-2
+install: x86_64/release/4ti2/4ti2-debuginfo/4ti2-debuginfo-1.6.7-2.tar.xz 4070832 2cdfc40c76eb5ca4d5da51777bae22906fd4a7da0b58e25af84d457c695170929aff7be117739df0e0b750c692498944d9f858ec3d4e049a47d77a50ae72c129
+source: x86_64/release/4ti2/4ti2-1.6.7-2-src.tar.xz 5319840 c43a4559c6747d182f73eb0857337b6cfc01b4c1eee78af8098a2baafef8bfafe04dda2faa24e5195124f2853c10b0f65e6437bee91a454e2ea03fb4f6a98393
+depends2: cygwin-debuginfo
+[prev]
+version: 1.6.7-1
+install: x86_64/release/4ti2/4ti2-debuginfo/4ti2-debuginfo-1.6.7-1.tar.xz 4192028 00b654b83363a79cb39fa6a77726f28b56250365e91dbf6c59271de722dc7ff2c210557fa7842fec507a663ff575064bb9a87e1632981999c285103bbfecdb61
+source: x86_64/release/4ti2/4ti2-1.6.7-1-src.tar.xz 5319824 9aba76ecb0c58d24d26df914cd372e46ae7f0d4828c51673f46b3916170cf476cede9d2eb8c934feb392f4d7ce5fc4e7b13ae2bf385d63609a99311424b035a9
+depends2: cygwin-debuginfo
