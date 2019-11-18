@@ -8,4 +8,4 @@
 .drafts
 
 # Flex/bison temp files
-lex.yy.c*
+lex.yy.*
