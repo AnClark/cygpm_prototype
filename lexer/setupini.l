@@ -32,7 +32,18 @@ SINGLE_COMMENT      ("#"[^\n]*)
 int main()
 {
     int token_type;
+
+#ifdef __cplusplus                        /** C++ Port */
+    // Create a new lexer instance
+    FlexLexer *lexer = new yyFlexLexer;
+
+    // Variable yyFlexLexer::yytext is protected. Use method YYText() instead.
+    #define yytext lexer->YYText()
+
+    while (token_type = lexer->yylex())
+#else                                    /** C Port by Default */
     while (token_type = yylex())
+#endif
     {
         switch(token_type) {
             case T_Package_Name:
@@ -71,7 +82,14 @@ int main()
     printf("\nPackage count: %d\n", numPackages);
 }
 
+#ifdef __cplusplus
+int yyFlexLexer::yywrap()
+{
+    return 1;
+}
+#else
 int yywrap()
 {
     return 1;
 }
+#endif

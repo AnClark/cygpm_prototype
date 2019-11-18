@@ -96,4 +96,4 @@ pacman -S gcc make flex
 ## Known Traps
 
 - Stream objects' `getline()` method will be too slow when reading big files.
-- Flex++ is still under beta, having a totally different API to Flex.
+- Flex++ is still under beta, which is much more slower than Flex.
