@@ -9,3 +9,7 @@
 
 # Flex/bison temp files
 lex.yy.*
+
+# FlexC++ temp files
+lex.cc
+Scanner*.h
