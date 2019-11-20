@@ -1,5 +1,7 @@
-# Executables
+# Executables / Objects
 *.exe*
+*.o
+*.a
 
 # Local configurations
 .vscode
