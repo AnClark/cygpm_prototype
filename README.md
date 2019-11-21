@@ -46,11 +46,12 @@ depends2: pkg1, pkg2, pkg3, ...
 - GCC/G++ (MinGW is also compatible)
 - GNU Flex
 - GNU Make
+- SQLite3 Development Libraries (`libsqlite-devel`)
 
 Quickly install them by Pacman in MSYS2:
 
 ```bash
-pacman -S gcc make flex
+pacman -S gcc make flex libsqlite-devel
 ```
 
 ## Plans
@@ -74,6 +75,7 @@ pacman -S gcc make flex
 #### setup.ini manipulation
 
 - Use **Flex** to generate lexer. It's easy and **EXTREMELY FAST**!
+- Convert `setup.ini` into a **SQLite3 database** so that I can make advantage of SQLite's high-efficiency.
 
 - My former thoughts (with C++11, but it's too slow)
   - Powered by C++11 `std::regex`
@@ -87,6 +89,7 @@ pacman -S gcc make flex
 
 - Draw a dependency TREE so that we can:
   - Pick out orphan packages (neither any packages depend to, nor manually installed by user)
+  - I'll use SQLite's table.
 - Install dependencies by QUEUE: Find all dependencies recursively, then add them to a pending queue structured by a `vector`.
 
 ### Question
