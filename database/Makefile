@@ -1,7 +1,7 @@
 all: main
 
 main: lex.yy.o database.o main.o
-	g++ $^ -o $@ -lsqlite3
+	g++ $^ -o $@ -static -lsqlite3 
 
 main.o: main.cpp
 	g++ -c $<
