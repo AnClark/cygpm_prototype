@@ -8,6 +8,7 @@
 
 # My drafts
 .drafts
+.backup
 
 # Flex/bison temp files
 lex.yy.*
