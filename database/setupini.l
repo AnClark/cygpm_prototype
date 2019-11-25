@@ -1,5 +1,4 @@
 %{
-//#include "lex.export.h"
 #include "tokens.h"
 %}
 

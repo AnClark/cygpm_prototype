@@ -16,6 +16,6 @@ lex.yy.c: setupini.l
 	flex $<
 
 clean:
-	rm -f *.exe *.o
+	rm -f *.exe* *.o
 	rm -f *.db
 	rm -f lex.yy*

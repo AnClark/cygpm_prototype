@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <iostream>
+#include <regex>
 #include <sqlite3.h>
 
 #include "lex.export.h"
@@ -8,9 +10,33 @@
 
 using namespace std;
 
-#define SQLITE_ERR_RETURN \
+#define SQLITE_ERR_RETURN             \
     errorLevel = sqlite3_errcode(db); \
     return sqlite3_errcode(db);
+
+#define STR_EQUAL(x,y) strcmp(x, y) == 0
+
+struct CurrentPackageInfo
+{
+    string pkg_name;
+    string sdesc;
+    string ldesc;
+    string category;
+    string requires__raw;
+    string version;
+    string install__raw;
+    string source__raw;
+    string depends2__raw;
+};
+
+struct CurrentPrevPackageInfo
+{
+    string pkg_name;
+    string version;
+    string install__raw;
+    string source__raw;
+    string depends2__raw;
+};
 
 class CygpmDatabase
 {
@@ -36,4 +62,10 @@ public:
      * - Querying database
      * - Manipulating dependencies
      */
+
+protected:
+    int insertPackageInfo(CurrentPackageInfo *packageInfo);
+    inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
 };
+
+
