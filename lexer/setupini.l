@@ -5,7 +5,7 @@ int quote = 0;
 %}
 
 WORD                ([^ \t\n\r\a]+)
-PACKAGE_NAME        ("@"[ ][0-9A-Za-z\-+_]+)
+PACKAGE_NAME        ("@"[ ][0-9A-Za-z\-+_.]+)
 YAML_KEY            ([_A-Za-z0-9\-]+":")
 SINGLE_COMMENT      ("#"[^\n]*)
 
