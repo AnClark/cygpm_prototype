@@ -14,7 +14,7 @@ using namespace std;
     errorLevel = sqlite3_errcode(db); \
     return sqlite3_errcode(db);
 
-#define STR_EQUAL(x,y) strcmp(x, y) == 0
+#define STR_EQUAL(x, y) strcmp(x, y) == 0
 
 struct CurrentPackageInfo
 {
@@ -41,11 +41,15 @@ struct CurrentPrevPackageInfo
 class CygpmDatabase
 {
 private:
-    sqlite3 *db;        // Database handler object
-    char *zErrMsg = 0;  // Error message returned by sqlite3_exec()
-    int rc;             // Return state
-    int errorLevel = 0; // Error state. Only for constructors (or fallback).
-                        // Other non-constructors can directly return error code.
+    sqlite3 *db;                     // Database handler object
+    char *zErrMsg = 0;               // Error message returned by sqlite3_exec()
+    stringstream db_transaction_sql; // To build transaction SQL query
+    int rc;                          // Return state
+    int errorLevel = 0;              // Error state. Only for constructors (or fallback).
+                                     // Other non-constructors can directly return error code.
+
+    int numPackages = 0;      // Count of packages
+    int numAddedPackages = 0; // Count of added packages
 
 public:
     CygpmDatabase(const char *fileName);
@@ -57,6 +61,8 @@ public:
     int getErrorLevel();
     int getErrorCode();
     const char *getErrorMsg();
+    int getNumPackages();
+    int getNumAddedPackages();
 
     /** TODO:
      * - Querying database
@@ -64,8 +70,8 @@ public:
      */
 
 protected:
-    int insertPackageInfo(CurrentPackageInfo *packageInfo);
+    void insertPackageInfo(CurrentPackageInfo *packageInfo);
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
+    void initTransaction();
+    int commitTransaction();
 };
-
-
