@@ -153,7 +153,7 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
      * Buffer objects
      */
     CurrentPackageInfo *pkg_info = new CurrentPackageInfo;              // Current package's info
-    CurrentPrevPackageInfo *pkg_info_prev = new CurrentPrevPackageInfo; // Current package's previous version info
+    CurrentPrevPackageInfo *prev_pkg_info = new CurrentPrevPackageInfo; // Current package's previous version info
     stringstream buff;                                                  // Buffer to build a YAML content
     string last_YAML_section;                                           // The last YAML section to be committed
 
@@ -186,11 +186,19 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
             {
                 // Remember that when a new package starts, the previous package's
                 //  last YAML item is also to be committed.
+                // Also should commit its previous version's YAML item.
                 if (is_adding_a_YAML_section)
-                    submitYAMLItem(last_YAML_section, pkg_info, buff);
+                    if (is_adding_a_previous_version)
+                        submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff);
+                    else
+                        submitYAMLItem(last_YAML_section, pkg_info, buff);
 
                 // Now submit our new package info
                 insertPackageInfo(pkg_info);
+
+                // Submit the last previous package's prev version info
+                if (is_adding_a_previous_version)
+                    insertPrevPackageInfo(prev_pkg_info);
             }
 
             /**
@@ -209,10 +217,6 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
             break;
 
         case T_YAML_Key:
-            // TODO: Handle previous version item
-            if (is_adding_a_previous_version)
-                break;
-
             // Ignore non-package YAML items
             // TODO: Handle setup.ini's metadata
             if (!is_adding_a_package)
@@ -222,15 +226,57 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
 
             is_adding_a_YAML_section = true;
 
-            submitYAMLItem(last_YAML_section, pkg_info, buff);
+            if (is_adding_a_previous_version)
+                submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff);
+            else
+                submitYAMLItem(last_YAML_section, pkg_info, buff);
 
             last_YAML_section = yytext;
 
             break;
 
         case T_Prev_Version_Mark:
-            //cout << "Found a previous version" << endl;
+            /**
+             * Remember that when a prev version starts, the last YAML item which positions
+             * before indicator "[prev]" is also to be committed.
+             */
+            if (is_adding_a_YAML_section)
+                submitYAMLItem(last_YAML_section, pkg_info, buff);
+
+            /**
+             * Check orphan [prev]. This is not allowed.
+             */
+            if (pkg_info->pkg_name.length() <= 0)
+            {
+                cerr << "Parse error: Orphan [prev] at " << yylineno << endl;
+                break;
+            }
+
+            /**
+             * Submit the last previous version info before getting a new one.
+             * If is_adding_a_previous_version == true, there's a prev version to be added and committed.
+             */
+            if (is_adding_a_previous_version)
+            {
+                // Submit the last prev version's last YAML item
+                submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff);
+
+                // Now submit our prev version info
+                insertPrevPackageInfo(prev_pkg_info);
+            }
+
+            /**
+             * Start handling a new previous version.
+             */
+            prev_pkg_info = new CurrentPrevPackageInfo;
+            prev_pkg_info->pkg_name = pkg_info->pkg_name;
+
+            /**
+             * Set operation bits.
+             */
             is_adding_a_previous_version = true;
+            is_adding_a_YAML_section = false;
+
             break;
 
         case T_Word:
@@ -259,12 +305,25 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
 
     /**
      * Remember to add the last package
+     * NOTICE: This section is same as the one in the lexer loop -> case "T_Package_Name".
      */
     if (is_adding_a_package)
     {
+        // Remember that when a new package starts, the previous package's
+        //  last YAML item is also to be committed.
+        // Also should commit its previous version's YAML item.
         if (is_adding_a_YAML_section)
-            submitYAMLItem(last_YAML_section, pkg_info, buff);
+            if (is_adding_a_previous_version)
+                submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff);
+            else
+                submitYAMLItem(last_YAML_section, pkg_info, buff);
+
+        // Now submit our new package info
         insertPackageInfo(pkg_info);
+
+        // Submit the last previous package's prev version info
+        if (is_adding_a_previous_version)
+            insertPrevPackageInfo(prev_pkg_info);
     }
 
     // Commit transaction
@@ -275,8 +334,6 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
 
 inline void CygpmDatabase::submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff)
 {
-#define YAML_SECTION_IS(x) YAML_section.compare(x) == 0
-
     if (YAML_SECTION_IS("sdesc:"))
     {
         pkg_info->sdesc = buff.str();
@@ -308,6 +365,30 @@ inline void CygpmDatabase::submitYAMLItem(string YAML_section, CurrentPackageInf
     else if (YAML_SECTION_IS("depends2:"))
     {
         pkg_info->depends2__raw = buff.str();
+    }
+
+    buff.str("");
+    if (buff.str().length() > 0)
+        cerr << "BUFF IS NOT CLEAN!" << endl;
+}
+
+inline void CygpmDatabase::submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff)
+{
+    if (YAML_SECTION_IS("version:"))
+    {
+        prev_pkg_info->version = buff.str();
+    }
+    else if (YAML_SECTION_IS("install:"))
+    {
+        prev_pkg_info->install__raw = buff.str();
+    }
+    else if (YAML_SECTION_IS("source:"))
+    {
+        prev_pkg_info->source__raw = buff.str();
+    }
+    else if (YAML_SECTION_IS("depends2:"))
+    {
+        prev_pkg_info->depends2__raw = buff.str();
     }
 
     buff.str("");
@@ -377,6 +458,43 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
     sprintf(sql_output, SQL_INSERT_PACKAGE_INFO, 
             packageInfo->)
 #endif
+}
+
+void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo)
+{
+    // Pre-define SQL query
+    const char *SQL_INSERT_PREV_PACKAGE_INFO = R"(
+        INSERT INTO "PREV_VERSIONS" (PKG_NAME, VERSION, 
+                                    _INSTALL__RAW, INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
+                                    _SOURCE__RAW, SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
+                                    DEPENDS2__RAW)
+        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');
+    )";
+
+    // Final SQL to generate
+    char *target_sql;
+
+    // Preprocess entries
+
+    // Calculate how much space should target_sql have
+    int len_target_sql = 100 + strlen(SQL_INSERT_PREV_PACKAGE_INFO) + prevPackageInfo->depends2__raw.length() + prevPackageInfo->install__raw.length() + prevPackageInfo->pkg_name.length() + prevPackageInfo->source__raw.length() + prevPackageInfo->version.length();
+    target_sql = new char[len_target_sql];
+
+    sprintf(target_sql, SQL_INSERT_PREV_PACKAGE_INFO,
+            prevPackageInfo->pkg_name.c_str(),
+            prevPackageInfo->version.c_str(),
+            prevPackageInfo->install__raw.c_str(),
+            "INSTALL_PAK_PATH",
+            "INSTALL_PAK_SIZE",
+            "INSTALL_PAK_SHA512",
+            prevPackageInfo->source__raw.c_str(),
+            "SOURCE_PAK_PATH",
+            "SOURCE_PAK_SIZE",
+            "SOURCE_PAK_SHA512",
+            prevPackageInfo->depends2__raw.c_str());
+
+    db_transaction_sql << "    -- [prev] " << prevPackageInfo->version << endl;
+    db_transaction_sql << target_sql;
 }
 
 void CygpmDatabase::initTransaction()

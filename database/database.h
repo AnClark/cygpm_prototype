@@ -15,6 +15,7 @@ using namespace std;
     return sqlite3_errcode(db);
 
 #define STR_EQUAL(x, y) strcmp(x, y) == 0
+#define YAML_SECTION_IS(x) YAML_section.compare(x) == 0
 
 struct CurrentPackageInfo
 {
@@ -71,7 +72,9 @@ public:
 
 protected:
     void insertPackageInfo(CurrentPackageInfo *packageInfo);
+    void insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo);
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
+    inline void submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff);
     void initTransaction();
     int commitTransaction();
 };
