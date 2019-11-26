@@ -82,7 +82,6 @@ int CygpmDatabase::createTable()
         CREATE TABLE IF NOT EXISTS "DEPENDENCY_MAP" (
 	        "PKG_NAME"	TEXT NOT NULL,
 	        "DEPENDS_ON"	TEXT NOT NULL,
-	        PRIMARY KEY("PKG_NAME"),
 	        FOREIGN KEY("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
     )";
