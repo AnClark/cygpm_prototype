@@ -17,5 +17,5 @@ lex.yy.c: setupini.l
 
 clean:
 	rm -f *.exe* *.o
-	rm -f *.db
+	rm -f *.db*
 	rm -f lex.yy*

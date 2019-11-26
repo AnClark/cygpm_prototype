@@ -18,4 +18,4 @@ lex.cc
 Scanner*.h
 
 # Database files
-*.db
+*.db*
