@@ -36,8 +36,9 @@ CygpmDatabase::~CygpmDatabase()
 
 int CygpmDatabase::createTable()
 {
-    /** Create package info table **/
-
+    /** 
+     * Create package info table
+     */
     const char *SQL_CREATE_PACKAGE_INFO = R"(
         DROP TABLE IF EXISTS "PKG_INFO";
 
@@ -74,8 +75,9 @@ int CygpmDatabase::createTable()
         cerr << "Table PKG_INFO created successfully" << endl;
     }
 
-    /** Create dependency table **/
-
+    /**
+     *  Create dependency map table
+     */
     const char *SQL_CREATE_DEPENDENCY_MAP = R"(
         DROP TABLE IF EXISTS "DEPENDENCY_MAP";
 
@@ -97,6 +99,40 @@ int CygpmDatabase::createTable()
     else
     {
         cerr << "Table DEPEDENCY_MAP created successfully" << endl;
+    }
+
+    /**
+     * Create previous versions table
+     */
+    const char *SQL_CREATE_PREV_VERSIONS_TABLE = R"(
+        DROP TABLE IF EXISTS "PREV_VERSIONS";
+
+        CREATE TABLE IF NOT EXISTS "PREV_VERSIONS" (
+            "PKG_NAME"	TEXT NOT NULL,
+            "VERSION"	TEXT NOT NULL,
+            "_INSTALL__RAW"	TEXT NOT NULL,
+            "INSTALL_PAK_PATH"	TEXT,
+            "INSTALL_PAK_SIZE"	TEXT,
+            "INSTALL_PAK_SHA512"	TEXT,
+            "_SOURCE__RAW"	TEXT,
+            "SOURCE_PAK_PATH"	TEXT,
+            "SOURCE_PAK_SIZE"	TEXT,
+            "SOURCE_PAK_SHA512"	TEXT,
+            "DEPENDS2__RAW"	TEXT,
+            FOREIGN KEY ("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
+        );
+    )";
+    rc = sqlite3_exec(db, SQL_CREATE_PREV_VERSIONS_TABLE, callback, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+        sqlite3_free(zErrMsg);
+
+        SQLITE_ERR_RETURN
+    }
+    else
+    {
+        cerr << "Table PREV_VERSIONS created successfully" << endl;
     }
 
     return 0;
