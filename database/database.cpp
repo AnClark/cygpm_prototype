@@ -60,6 +60,11 @@ CygpmDatabase::~CygpmDatabase()
 int CygpmDatabase::createTable()
 {
     /** 
+     * Initialize transaction
+     */
+    initTransaction();
+
+    /** 
      * Create package info table
      */
     const char *SQL_CREATE_PACKAGE_INFO = R"(
@@ -84,19 +89,7 @@ int CygpmDatabase::createTable()
             PRIMARY KEY("PKG_NAME")
         );
     )";
-
-    rc = sqlite3_exec(db, SQL_CREATE_PACKAGE_INFO, callback, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        cerr << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
-
-        SQLITE_ERR_RETURN
-    }
-    else
-    {
-        cerr << "Table PKG_INFO created successfully" << endl;
-    }
+    db_transaction_sql << SQL_CREATE_PACKAGE_INFO << endl;
 
     /**
      *  Create dependency map table
@@ -110,19 +103,7 @@ int CygpmDatabase::createTable()
 	        FOREIGN KEY("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
     )";
-
-    rc = sqlite3_exec(db, SQL_CREATE_DEPENDENCY_MAP, callback, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        cerr << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
-
-        SQLITE_ERR_RETURN
-    }
-    else
-    {
-        cerr << "Table DEPEDENCY_MAP created successfully" << endl;
-    }
+    db_transaction_sql << SQL_CREATE_DEPENDENCY_MAP << endl;
 
     /**
      * Create previous versions table
@@ -145,20 +126,18 @@ int CygpmDatabase::createTable()
             FOREIGN KEY ("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
     )";
-    rc = sqlite3_exec(db, SQL_CREATE_PREV_VERSIONS_TABLE, callback, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        cerr << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
+    db_transaction_sql << SQL_CREATE_PREV_VERSIONS_TABLE << endl;
 
-        SQLITE_ERR_RETURN
-    }
+    /**
+     * Commit transaction & Get result
+     */
+    errorLevel = commitTransaction();
+    if (errorLevel == 0)
+        cerr << "Tables created" << endl;
     else
-    {
-        cerr << "Table PREV_VERSIONS created successfully" << endl;
-    }
+        cerr << "Error while creating tables: " << zErrMsg << endl;
 
-    return 0;
+    return errorLevel;
 }
 
 int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
@@ -349,8 +328,14 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
             insertPrevPackageInfo(prev_pkg_info);
     }
 
-    // Commit transaction
-    commitTransaction();
+    /**
+     * Commit transaction & Get result
+     */
+    errorLevel = commitTransaction();
+    if (errorLevel == 0)
+        cerr << "Built setup.ini database" << endl;
+    else
+        cerr << "Error while building database: " << zErrMsg << endl;
 
     return 0;
 }
@@ -549,7 +534,7 @@ int CygpmDatabase::commitTransaction()
     }
     else
     {
-        cerr << "Transaction committed" << endl;
+        cerr << "> Transaction committed" << endl;
     }
 
     errorLevel = 0;
