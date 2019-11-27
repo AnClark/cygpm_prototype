@@ -13,20 +13,43 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName)
 
 CygpmDatabase::CygpmDatabase(const char *fileName)
 {
+    /**
+     * Open database
+     */
     rc = sqlite3_open(fileName, &db);
 
     if (rc)
     {
         cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
         errorLevel = sqlite3_errcode(db);
+        return;
     }
     else
     {
         cerr << "Opened database successfully" << endl;
-        errorLevel = 0;
+    }
+
+    /**
+     * Optimize database - Store journal in memory
+     */
+
+    const char *SQL_PRAGMA_SET_JOURNAL_TO_MEMORY = R"(
+        PRAGMA journal_mode = memory;
+    )";
+
+    rc = sqlite3_exec(db, SQL_PRAGMA_SET_JOURNAL_TO_MEMORY, NULL, NULL, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "Failed to set journal to memory: " << zErrMsg << endl;
+        errorLevel = sqlite3_errcode(db);
+    }
+    else
+    {
+        cerr << "Database: Journal set to memory" << endl;
     }
 
     // Constructor doesn't support return values. So use errorLevel instead.
+    errorLevel = 0;
 }
 
 CygpmDatabase::~CygpmDatabase()
