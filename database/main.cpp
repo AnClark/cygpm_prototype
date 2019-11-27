@@ -1,11 +1,11 @@
 #include "database.h"
 
-const char* DATABASE_NAME = "./cygpm.db";
+const char *DATABASE_NAME = "./cygpm.db";
 
 int main()
 {
     CygpmDatabase db(DATABASE_NAME);
-    if(db.getErrorLevel() != 0)
+    if (db.getErrorLevel() != 0)
     {
         cerr << "ERROR: Failed to open database. Abort." << endl;
         return -1;
@@ -13,6 +13,7 @@ int main()
 
     db.createTable();
     db.parseAndBuildDatabase("../test/setup.ini");
+    db.buildDependencyMap();
 
     return 0;
 }

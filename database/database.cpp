@@ -340,6 +340,72 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
     return 0;
 }
 
+int CygpmDatabase::buildDependencyMap()
+{
+    /* Variables */
+    char **dbResult; // Results from sqlite3_get_table()
+    int nRow;        // Row count
+    int nColumn;     // Column count
+    int i, j;        // Loop variable
+
+    /**
+     * NOTICE: In sqlite3_get_table(), dbResult's column values are successive. 
+     * It stores the dimension table (traditional RxC) into a flat array.
+     * So, dbResult[0, nColumn - 1] are column names, dbResult[nColumn, len(dbResult)] are column values.
+     */
+    int nIndex; // Current index of dbResult
+
+    /* SQL query */
+    const char *SQL_GET_REQUIRES__RAW = R"(
+        SELECT PKG_NAME,REQUIRES__RAW FROM PKG_INFO;
+    )";
+
+    /* Initialize transaction */
+    initTransaction();
+
+    cerr << "Building dependency map" << endl;
+
+    /**
+     * Execute SQL statement to get requires__raw data 
+     */
+    rc = sqlite3_get_table(db, SQL_GET_REQUIRES__RAW, &dbResult, &nRow, &nColumn, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+        sqlite3_free(zErrMsg);
+
+        SQLITE_ERR_RETURN;
+    }
+
+    /**
+     * Start parsing requires__raw.
+     * Parse each package's requires__raw respectively.
+     */
+    nIndex = nColumn; // Initialize nIndex
+    for (i = 0; i < nRow; i++)
+    {
+        // Run parser
+        // There will be only two columns: PKG_NAME, REQUIRES_RAW.
+        parseRequiresRaw(dbResult[nIndex], dbResult[nIndex + 1]);
+
+        nIndex += 2; // Go to the next row
+    }
+
+    /**
+     * Commit transaction & Get result
+     */
+    errorLevel = commitTransaction();
+    if (errorLevel == 0)
+        cerr << "Dependency map built" << endl;
+    else
+        cerr << "Error while building dependency map: " << zErrMsg << endl;
+
+    return errorLevel;
+
+    errorLevel = 0;
+    return errorLevel;
+}
+
 inline void CygpmDatabase::submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff)
 {
     if (YAML_SECTION_IS("sdesc:"))
@@ -503,6 +569,45 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
 
     db_transaction_sql << "    -- [prev] " << prevPackageInfo->version << endl;
     db_transaction_sql << target_sql;
+}
+
+inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *requires__raw)
+{
+    /* SQL statements */
+    const char *SQL_INSERT_DEPENDENCY_MAP_ITEM = R"(
+        INSERT INTO "DEPENDENCY_MAP" (PKG_NAME, DEPENDS_ON)
+        VALUES ('%s', '%s');
+    )";               // Pre-defined SQL query
+    char *target_sql; // Final SQL to generate
+
+    /**
+     * Parse requires__raw
+     */
+    const char *splitter = " "; // strtok()'s splitter
+    char *token;                // Child string
+
+    /* strtok() will modify its source! So we'd better make a copy. */
+    char *tmp = new char[strlen(requires__raw) + 1];
+    strcpy(tmp, requires__raw);
+
+    /* Split the requires__raw */
+    token = strtok(tmp, splitter); // Get the first child string
+
+    // Get the remainders
+    while (token != NULL)
+    {
+        // Calculate how much space should target_sql have
+        target_sql = new char[100 + strlen(SQL_INSERT_DEPENDENCY_MAP_ITEM) + strlen(pkg_name) + strlen(token)];
+
+        // Form SQL statement
+        sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, token);
+
+        // Add generated SQL to buffer
+        db_transaction_sql << target_sql;
+
+        // Get the next remainder
+        token = strtok(NULL, splitter);
+    }
 }
 
 void CygpmDatabase::initTransaction()

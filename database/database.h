@@ -58,6 +58,7 @@ public:
 
     int createTable();                                        // Create basic table
     int parseAndBuildDatabase(const char *setupini_fileName); // Parse setup.ini, adding its data into database
+    int buildDependencyMap();                                 // Parse dependency list, then build dependency map
 
     int getErrorLevel();
     int getErrorCode();
@@ -70,11 +71,13 @@ public:
      * - Manipulating dependencies
      */
 
+
 protected:
     void insertPackageInfo(CurrentPackageInfo *packageInfo);
     void insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo);
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
     inline void submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff);
+    inline void parseRequiresRaw(char* pkg_name, char* requires__raw);
     void initTransaction();
     int commitTransaction();
 };
