@@ -401,8 +401,65 @@ int CygpmDatabase::buildDependencyMap()
         cerr << "Error while building dependency map: " << zErrMsg << endl;
 
     return errorLevel;
+}
 
-    errorLevel = 0;
+int CygpmDatabase::generateInsSrcData()
+{
+    /* Variables */
+    char **dbResult; // Results from sqlite3_get_table()
+    int nRow;        // Row count
+    int nColumn;     // Column count
+    int i, j;        // Loop variable
+
+    /**
+     * NOTICE: In sqlite3_get_table(), dbResult's column values are successive. 
+     * It stores the dimension table (traditional RxC) into a flat array.
+     * So, dbResult[0, nColumn - 1] are column names, dbResult[nColumn, len(dbResult)] are column values.
+     */
+    int nIndex; // Current index of dbResult
+
+    /* SQL query */
+    const char *SQL_GET_INSTALL__RAW_AND_SOURCE__RAW = R"(
+        SELECT PKG_NAME,_INSTALL__RAW,_SOURCE__RAW FROM PKG_INFO;
+    )";
+
+    /* Initialize transaction */
+    initTransaction();
+
+    cerr << "Parsing install & source data" << endl;
+
+    /**
+     * Execute SQL statement to get requires__raw data 
+     */
+    rc = sqlite3_get_table(db, SQL_GET_INSTALL__RAW_AND_SOURCE__RAW, &dbResult, &nRow, &nColumn, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+        sqlite3_free(zErrMsg);
+
+        SQLITE_ERR_RETURN;
+    }
+
+    /**
+     * Start parsing install__raw and requires__raw.
+     * Parse each package's install__raw and requires__raw respectively.
+     */
+    nIndex = nColumn; // Initialize nIndex
+    for (i = 0; i < nRow; i++)
+    {
+        // Run parser
+        // There will be three columns: PKG_NAME, _INSTALL__RAW, _SOURCE__RAW.
+        parseInsSrcRaw(dbResult[nIndex], dbResult[nIndex + 1], dbResult[nIndex + 2]);
+
+        nIndex += 3; // Go to the next row
+    }
+
+    errorLevel = commitTransaction();
+    if (errorLevel == 0)
+        cerr << "install__raw and source__raw parsed" << endl;
+    else
+        cerr << "Error while making changes: " << zErrMsg << endl;
+
     return errorLevel;
 }
 
@@ -508,30 +565,6 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
             packageInfo->depends2__raw.c_str());
 
     db_transaction_sql << target_sql;
-
-#if 0
-    /** INSTALL/SOURCE's data format: 
-     *     1. Package path: Any characters without space
-     *     2. Package size: An integer
-     *     3. SHA512 checksum: Only contains [A-Za-z0-9]  TODO: Must have len of 128.
-     */
-    regex raw_data_splitter(R"(([^ ]+)\s+(\d+)\s+([A-Za-z0-9]+))");
-    smatch result;
-
-    char *install_pak_path, *install_pak_size, *install_pak_sha512;
-    char *source_pak_path, *source_pak_size, *source_pak_sha512;
-
-    // TODO: Check before parsing!
-    // Parse _INSTALL__RAW
-    string str_install__raw(install__raw);
-    regex_search(str_install__raw, result, raw_data_splitter);
-
-    // Parse _SOURCE__RAW
-
-    char* sql_output;
-    sprintf(sql_output, SQL_INSERT_PACKAGE_INFO, 
-            packageInfo->)
-#endif
 }
 
 void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo)
@@ -608,6 +641,36 @@ inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *requires__raw)
         // Get the next remainder
         token = strtok(NULL, splitter);
     }
+}
+
+inline void CygpmDatabase::parseInsSrcRaw(char *pkg_name, char *install__raw, char *source__raw)
+{
+    /* Buffer */
+    char install_pak_path[strlen(install__raw)], install_pak_size[strlen(install__raw)], install_pak_sha512[strlen(install__raw)];
+    char source_pak_path[strlen(source__raw)], source_pak_size[strlen(source__raw)], source_pak_sha512[strlen(source__raw)];
+
+    /* SQL statements */
+    const char *SQL_UPDATE_INS_SRC_DATA = R"(
+        UPDATE "PKG_INFO" 
+        SET INSTALL_PAK_PATH = '%s', INSTALL_PAK_SIZE = '%s', INSTALL_PAK_SHA512 = '%s', SOURCE_PAK_PATH = '%s', SOURCE_PAK_SIZE = '%s', SOURCE_PAK_SHA512 = '%s'
+        WHERE PKG_NAME = '%s';
+    )";               // Pre-defined SQL query
+    char *target_sql; // Final SQL to generate
+
+    /* Parse raw data with sscanf */
+    sscanf(install__raw, "%s %s %s", install_pak_path, install_pak_size, install_pak_sha512);
+    sscanf(source__raw, "%s %s %s", source_pak_path, source_pak_size, source_pak_sha512);
+
+    /* Concatenate SQL query */
+    // CAUTION! You must give big enough space for target_sql here.
+    target_sql = new char[500 + strlen(SQL_UPDATE_INS_SRC_DATA) + strlen(install__raw) + strlen(source__raw)];
+    sprintf(target_sql, SQL_UPDATE_INS_SRC_DATA,
+            install_pak_path, install_pak_size, install_pak_sha512,
+            source_pak_path, source_pak_size, source_pak_sha512,
+            pkg_name);
+
+    /* Add generated SQL to buffer */
+    db_transaction_sql << target_sql;
 }
 
 void CygpmDatabase::initTransaction()

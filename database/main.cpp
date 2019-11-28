@@ -14,6 +14,7 @@ int main()
     db.createTable();
     db.parseAndBuildDatabase("../test/setup.ini");
     db.buildDependencyMap();
+    db.generateInsSrcData();
 
     return 0;
 }
