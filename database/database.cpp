@@ -372,7 +372,6 @@ int CygpmDatabase::buildDependencyMap()
     if (rc != SQLITE_OK)
     {
         cerr << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
 
         SQLITE_ERR_RETURN;
     }
@@ -632,7 +631,6 @@ int CygpmDatabase::commitTransaction()
     if (rc != SQLITE_OK)
     {
         cerr << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
 
         SQLITE_ERR_RETURN
     }
