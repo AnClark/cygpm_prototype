@@ -481,7 +481,11 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
     /* Final SQL to generate */
     char *target_sql;
 
-    /* Preprocess entries */
+    /* Preprocess package name data */
+    char pkg_name[packageInfo->pkg_name.length() + 1];
+    sscanf(packageInfo->pkg_name.c_str(), "@ %s", pkg_name);
+
+    /* Preprocess install/source data */
     const int LEN_INSTALL__RAW = packageInfo->install__raw.length() + 1,
               LEN_SOURCE__RAW = packageInfo->source__raw.length() + 1;
     char install_pak_path[LEN_INSTALL__RAW], install_pak_size[LEN_INSTALL__RAW], install_pak_sha512[LEN_INSTALL__RAW];
@@ -496,7 +500,7 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
 
     /* Concatenate SQL query */
     sprintf(target_sql, SQL_INSERT_PACKAGE_INFO,
-            packageInfo->pkg_name.c_str(),
+            pkg_name,
             packageInfo->sdesc.c_str(),
             packageInfo->ldesc.c_str(),
             packageInfo->category.c_str(),
@@ -530,7 +534,11 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     /* Final SQL to generate */
     char *target_sql;
 
-    /* Preprocess entries */
+    /* Preprocess package name data */
+    char pkg_name[prevPackageInfo->pkg_name.length() + 1];
+    sscanf(prevPackageInfo->pkg_name.c_str(), "@ %s", pkg_name);
+
+    /* Preprocess install/source data */
     const int LEN_INSTALL__RAW = prevPackageInfo->install__raw.length() + 1,
               LEN_SOURCE__RAW = prevPackageInfo->source__raw.length() + 1;
     char install_pak_path[LEN_INSTALL__RAW], install_pak_size[LEN_INSTALL__RAW], install_pak_sha512[LEN_INSTALL__RAW];
@@ -545,7 +553,7 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
 
     /* Concatenate SQL query */
     sprintf(target_sql, SQL_INSERT_PREV_PACKAGE_INFO,
-            prevPackageInfo->pkg_name.c_str(),
+            pkg_name,
             prevPackageInfo->version.c_str(),
             prevPackageInfo->install__raw.c_str(),
             install_pak_path,
