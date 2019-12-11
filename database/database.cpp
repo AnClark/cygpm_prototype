@@ -99,6 +99,7 @@ int CygpmDatabase::createTable()
 
         CREATE TABLE IF NOT EXISTS "DEPENDENCY_MAP" (
 	        "PKG_NAME"	TEXT NOT NULL,
+            "VERSION"   TEXT NOT NULL,
 	        "DEPENDS_ON"	TEXT NOT NULL,
 	        FOREIGN KEY("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
@@ -357,7 +358,7 @@ int CygpmDatabase::buildDependencyMap()
 
     /* SQL query */
     const char *SQL_GET_REQUIRES__RAW = R"(
-        SELECT PKG_NAME,REQUIRES__RAW FROM PKG_INFO;
+        SELECT PKG_NAME,VERSION,REQUIRES__RAW FROM PKG_INFO;
     )";
 
     /* Initialize transaction */
@@ -384,10 +385,10 @@ int CygpmDatabase::buildDependencyMap()
     for (i = 0; i < nRow; i++)
     {
         // Run parser
-        // There will be only two columns: PKG_NAME, REQUIRES_RAW.
-        parseRequiresRaw(dbResult[nIndex], dbResult[nIndex + 1]);
+        // There will be only three columns: PKG_NAME, VERSION, REQUIRES_RAW.
+        parseRequiresRaw(dbResult[nIndex], dbResult[nIndex + 1], dbResult[nIndex + 2]);
 
-        nIndex += 2; // Go to the next row
+        nIndex += 3; // Go to the next row
     }
 
     /**
@@ -569,12 +570,12 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     db_transaction_sql << target_sql;
 }
 
-inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *requires__raw)
+inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char *requires__raw)
 {
     /* SQL statements */
     const char *SQL_INSERT_DEPENDENCY_MAP_ITEM = R"(
-        INSERT INTO "DEPENDENCY_MAP" (PKG_NAME, DEPENDS_ON)
-        VALUES ('%s', '%s');
+        INSERT INTO "DEPENDENCY_MAP" (PKG_NAME, VERSION, DEPENDS_ON)
+        VALUES ('%s', '%s', '%s');
     )";               // Pre-defined SQL query
     char *target_sql; // Final SQL to generate
 
@@ -598,7 +599,7 @@ inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *requires__raw)
         target_sql = new char[100 + strlen(SQL_INSERT_DEPENDENCY_MAP_ITEM) + strlen(pkg_name) + strlen(token)];
 
         // Form SQL statement
-        sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, token);
+        sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, version, token);
 
         // Add generated SQL to buffer
         db_transaction_sql << target_sql;

@@ -76,7 +76,7 @@ protected:
     void insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo);
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
     inline void submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff);
-    inline void parseRequiresRaw(char *pkg_name, char *requires__raw);
+    inline void parseRequiresRaw(char *pkg_name, char *version, char *requires__raw);
     void initTransaction();
     int commitTransaction();
 };
