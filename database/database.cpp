@@ -244,7 +244,12 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
              * before indicator "[prev]" is also to be committed.
              */
             if (is_adding_a_YAML_section)
-                submitYAMLItem(last_YAML_section, pkg_info, buff);
+            {
+                if (is_adding_a_previous_version)
+                    submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff); // Submit the last prev version's one
+                else
+                    submitYAMLItem(last_YAML_section, pkg_info, buff); // Submit the main version's one
+            }
 
             /**
              * Check orphan [prev]. This is not allowed.
@@ -261,9 +266,6 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
              */
             if (is_adding_a_previous_version)
             {
-                // Submit the last prev version's last YAML item
-                submitYAMLItem_PrevVersion(last_YAML_section, prev_pkg_info, buff);
-
                 // Now submit our prev version info
                 insertPrevPackageInfo(prev_pkg_info);
             }
