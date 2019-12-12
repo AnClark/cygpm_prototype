@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <cctype>
 #include <iostream>
 #include <regex>
 #include <sqlite3.h>
@@ -77,6 +78,7 @@ protected:
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
     inline void submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff);
     inline void parseRequiresRaw(char *pkg_name, char *version, char *requires__raw);
+    inline void parseDepends2(char *pkg_name, char *version, char *depends2__raw);
     void initTransaction();
     int commitTransaction();
 };
