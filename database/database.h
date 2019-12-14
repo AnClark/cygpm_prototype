@@ -45,7 +45,7 @@ class CygpmDatabase
 private:
     sqlite3 *db;                     // Database handler object
     char *zErrMsg = 0;               // Error message returned by sqlite3_exec()
-    stringstream db_transaction_sql; // To build transaction SQL query
+    //stringstream db_transaction_sql; // To build transaction SQL query
     int rc;                          // Return state
     int errorLevel = 0;              // Error state. Only for constructors (or fallback).
                                      // Other non-constructors can directly return error code.
@@ -79,6 +79,7 @@ protected:
     inline void submitYAMLItem_PrevVersion(string YAML_section, CurrentPrevPackageInfo *prev_pkg_info, stringstream &buff);
     inline void parseRequiresRaw(char *pkg_name, char *version, char *requires__raw);
     inline void parseDepends2(char *pkg_name, char *version, char *depends2__raw);
-    void initTransaction();
+    int initTransaction();
     int commitTransaction();
+    void execTransactionSQL(const char *sql_statement);
 };

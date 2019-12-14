@@ -72,6 +72,11 @@ int CygpmDatabase::createTable()
      * Initialize transaction
      */
     initTransaction();
+    if (errorLevel != 0)
+    {
+        cerr << "Error while creating tables: Transaction starting failed" << endl;
+        return errorLevel;
+    }
 
     /** 
      * Create package info table
@@ -98,7 +103,7 @@ int CygpmDatabase::createTable()
             PRIMARY KEY("PKG_NAME")
         );
     )";
-    db_transaction_sql << SQL_CREATE_PACKAGE_INFO << endl;
+    execTransactionSQL(SQL_CREATE_PACKAGE_INFO);
 
     /**
      *  Create dependency map table
@@ -113,7 +118,7 @@ int CygpmDatabase::createTable()
 	        FOREIGN KEY("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
     )";
-    db_transaction_sql << SQL_CREATE_DEPENDENCY_MAP << endl;
+    execTransactionSQL(SQL_CREATE_DEPENDENCY_MAP);
 
     /**
      * Create previous versions table
@@ -136,7 +141,7 @@ int CygpmDatabase::createTable()
             FOREIGN KEY ("PKG_NAME") REFERENCES "PKG_INFO"("PKG_NAME")
         );
     )";
-    db_transaction_sql << SQL_CREATE_PREV_VERSIONS_TABLE << endl;
+    execTransactionSQL(SQL_CREATE_PREV_VERSIONS_TABLE);
 
     /**
      * Commit transaction & Get result
@@ -173,6 +178,11 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
 
     // Initialize transaction
     initTransaction();
+    if (errorLevel != 0)
+    {
+        cerr << "Error while building database: Transaction starting failed" << endl;
+        return errorLevel;
+    }
 
     /**
      * Start parsing
@@ -377,6 +387,11 @@ int CygpmDatabase::buildDependencyMap()
 
     /* Initialize transaction */
     initTransaction();
+    if (errorLevel != 0)
+    {
+        cerr << "Error while building dependency map: Transaction starting failed" << endl;
+        return errorLevel;
+    }
 
     cerr << "Building dependency map" << endl;
 
@@ -562,7 +577,7 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
             packageInfo->depends2__raw.c_str());
 
     /* Commit SQL query */
-    db_transaction_sql << target_sql;
+    execTransactionSQL(target_sql);
 }
 
 void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo)
@@ -611,8 +626,7 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
             prevPackageInfo->depends2__raw.c_str());
 
     /* Commit SQL query */
-    db_transaction_sql << "    -- [prev] " << prevPackageInfo->version << endl;
-    db_transaction_sql << target_sql;
+    execTransactionSQL(target_sql);
 }
 
 inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char *requires__raw)
@@ -647,7 +661,7 @@ inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char 
         sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, version, token);
 
         // Add generated SQL to buffer
-        db_transaction_sql << target_sql;
+        execTransactionSQL(target_sql);
 
         // Get the next remainder
         token = strtok(NULL, splitter);
@@ -686,36 +700,39 @@ inline void CygpmDatabase::parseDepends2(char *pkg_name, char *version, char *de
         sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, version, ltrim(token));
 
         // Add generated SQL to buffer
-        db_transaction_sql << target_sql;
+        execTransactionSQL(target_sql);
 
         // Get the next remainder
         token = strtok(NULL, splitter);
     }
 }
 
-void CygpmDatabase::initTransaction()
+int CygpmDatabase::initTransaction()
 {
-    // Clear transaction buffer
-    db_transaction_sql.str("");
+    // Execute begin transaction statement
+    rc = sqlite3_exec(db, "BEGIN;", NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "> Cannot start a transaction: " << zErrMsg << endl;
 
-    // Add init sentence
-    db_transaction_sql << "BEGIN;" << endl;
+        SQLITE_ERR_RETURN;
+    }
+
+    errorLevel = 0;
+    return errorLevel;
 }
 
 int CygpmDatabase::commitTransaction()
 {
-    // Add commit sentence
-    db_transaction_sql << endl
-                       << "COMMIT;" << endl;
-
     // TODO: Allow output SQL queries when debug switch is on
     //cout << db_transaction_sql.str() << endl;
 
     // Execute SQL
-    rc = sqlite3_exec(db, db_transaction_sql.str().c_str(), callback, 0, &zErrMsg);
+    rc = sqlite3_exec(db, "COMMIT;", callback, 0, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         cerr << "SQL error: " << zErrMsg << endl;
+        sqlite3_exec(db, "ROLLBACK;", callback, 0, &zErrMsg);
 
         SQLITE_ERR_RETURN
     }
@@ -726,6 +743,16 @@ int CygpmDatabase::commitTransaction()
 
     errorLevel = 0;
     return errorLevel;
+}
+
+void CygpmDatabase::execTransactionSQL(const char *sql_statement)
+{
+    rc = sqlite3_exec(db, sql_statement, NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "> One action failed: " << zErrMsg << endl;
+        cerr << sql_statement << endl;
+    }
 }
 
 int CygpmDatabase::getErrorLevel()
