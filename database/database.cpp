@@ -533,8 +533,8 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
     /* Preprocess install/source data */
     const int LEN_INSTALL__RAW = packageInfo->install__raw.length() + 1,
               LEN_SOURCE__RAW = packageInfo->source__raw.length() + 1;
-    char install_pak_path[LEN_INSTALL__RAW], install_pak_size[LEN_INSTALL__RAW], install_pak_sha512[LEN_INSTALL__RAW];
-    char source_pak_path[LEN_SOURCE__RAW], source_pak_size[LEN_SOURCE__RAW], source_pak_sha512[LEN_SOURCE__RAW];
+    char install_pak_path[LEN_INSTALL__RAW] = "", install_pak_size[LEN_INSTALL__RAW] = "", install_pak_sha512[LEN_INSTALL__RAW] = "";
+    char source_pak_path[LEN_SOURCE__RAW] = "", source_pak_size[LEN_SOURCE__RAW] = "", source_pak_sha512[LEN_SOURCE__RAW] = "";
 
     sscanf(packageInfo->install__raw.c_str(), "%s %s %s", install_pak_path, install_pak_size, install_pak_sha512);
     sscanf(packageInfo->source__raw.c_str(), "%s %s %s", source_pak_path, source_pak_size, source_pak_sha512);
@@ -586,8 +586,8 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     /* Preprocess install/source data */
     const int LEN_INSTALL__RAW = prevPackageInfo->install__raw.length() + 1,
               LEN_SOURCE__RAW = prevPackageInfo->source__raw.length() + 1;
-    char install_pak_path[LEN_INSTALL__RAW], install_pak_size[LEN_INSTALL__RAW], install_pak_sha512[LEN_INSTALL__RAW];
-    char source_pak_path[LEN_SOURCE__RAW], source_pak_size[LEN_SOURCE__RAW], source_pak_sha512[LEN_SOURCE__RAW];
+    char install_pak_path[LEN_INSTALL__RAW] = "", install_pak_size[LEN_INSTALL__RAW] = "", install_pak_sha512[LEN_INSTALL__RAW] = "";
+    char source_pak_path[LEN_SOURCE__RAW] = "", source_pak_size[LEN_SOURCE__RAW] = "", source_pak_sha512[LEN_SOURCE__RAW] = "";
 
     sscanf(prevPackageInfo->install__raw.c_str(), "%s %s %s", install_pak_path, install_pak_size, install_pak_sha512);
     sscanf(prevPackageInfo->source__raw.c_str(), "%s %s %s", source_pak_path, source_pak_size, source_pak_sha512);
