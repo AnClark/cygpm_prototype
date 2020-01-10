@@ -22,6 +22,8 @@ int main()
     db.parseAndBuildDatabase("../test/setup.ini");
     db.buildDependencyMap();
 
+    cout << "Added " << db.getNumPackages() << " packages" << endl;
+
     return 0;
 }
 

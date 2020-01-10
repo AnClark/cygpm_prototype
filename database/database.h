@@ -51,9 +51,6 @@ private:
     int errorLevel = 0;              // Error state. Only for constructors (or fallback).
                                      // Other non-constructors can directly return error code.
 
-    int numPackages = 0;      // Count of packages
-    int numAddedPackages = 0; // Count of added packages
-
 public:
     CygpmDatabase(const char *fileName);
     ~CygpmDatabase();
@@ -66,7 +63,6 @@ public:
     int getErrorCode();
     const char *getErrorMsg();
     int getNumPackages();
-    int getNumAddedPackages();
 
     /** TODO:
      * - Querying database

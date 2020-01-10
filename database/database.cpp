@@ -174,14 +174,14 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
     stringstream buff;                                                  // Buffer to build a YAML content
     string last_YAML_section;                                           // The last YAML section to be committed
 
-    numPackages = 0; // Packages' count
+    int numPackages_SetupINI = 0; // Packages' count
 
     // Initialize transaction
     initTransaction();
     if (errorLevel != 0)
     {
         cerr << "Error while building database: Transaction starting failed" << endl;
-        return errorLevel;
+        return -errorLevel;
     }
 
     /**
@@ -198,7 +198,7 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
         switch (token_type)
         {
         case T_Package_Name:
-            numPackages++; // Stat package count
+            numPackages_SetupINI++; // Stat package count
 
             /**
              * Submit the last package info before start a new one.
@@ -357,9 +357,12 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
     if (errorLevel == 0)
         cerr << "Built setup.ini database" << endl;
     else
+    {
         cerr << "Error while building database: " << zErrMsg << endl;
+        return -errorLevel;
+    }
 
-    return 0;
+    return numPackages_SetupINI;
 }
 
 int CygpmDatabase::buildDependencyMap()
@@ -772,11 +775,40 @@ const char *CygpmDatabase::getErrorMsg()
 
 int CygpmDatabase::getNumPackages()
 {
-    return numPackages;
-}
+    /* Variables */
+    char **dbResult; // Results from sqlite3_get_table()
+    int nRow;        // Row count
+    int nColumn;     // Column count
+    int i, j;        // Loop variable
 
-int CygpmDatabase::getNumAddedPackages()
-{
-    // TODO: Use SQL query to calculate how much packages are actually added
-    return numAddedPackages;
+    /**
+     * NOTICE: In sqlite3_get_table(), dbResult's column values are successive. 
+     * It stores the dimension table (traditional RxC) into a flat array.
+     * So, dbResult[0, nColumn - 1] are column names, dbResult[nColumn, len(dbResult)] are column values.
+     */
+    int nIndex; // Current index of dbResult
+
+    /* SQL query */
+    const char *SQL_GET_NUM_PACKAGES = R"(
+        SELECT COUNT(PKG_NAME) FROM PKG_INFO;
+    )";
+
+    /**
+     * Execute SQL statement to get package count
+     */
+    rc = sqlite3_get_table(db, SQL_GET_NUM_PACKAGES, &dbResult, &nRow, &nColumn, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+
+        SQLITE_ERR_RETURN;
+    }
+
+    /**
+     * Start parsing query result.
+     * Result is also a SQL table, but only one column, one line.
+     */
+    nIndex = nColumn; // Initialize nIndex
+
+    return atoi(dbResult[nIndex]);
 }
