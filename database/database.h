@@ -60,6 +60,10 @@ public:
     int parseAndBuildDatabase(const char *setupini_fileName); // Parse setup.ini, adding its data into database
     int buildDependencyMap();                                 // Parse dependency list, then build dependency map
 
+    int findDependencies(vector<string> &dependency_list, const char *pkg_name, const char *version); // Find dependencies
+
+    char *getNewestVersion(const char *pkg_name);
+
     int getErrorLevel();
     int getErrorCode();
     const char *getErrorMsg();

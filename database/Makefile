@@ -1,9 +1,12 @@
 all: main
 
-main: lex.yy.o database.o main.o
+main: lex.yy.o database.o db_query.o main.o
 	g++ $^ -o $@ -static -lsqlite3 
 
 main.o: main.cpp
+	g++ -c $<
+
+db_query.o: db_query.cpp database.h
 	g++ -c $<
 
 database.o: database.cpp database.h lex.export.h
