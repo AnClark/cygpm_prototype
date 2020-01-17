@@ -44,16 +44,17 @@ struct CurrentPrevPackageInfo
 class CygpmDatabase
 {
 private:
-    sqlite3 *db;                     // Database handler object
-    char *zErrMsg = 0;               // Error message returned by sqlite3_exec()
+    sqlite3 *db;       // Database handler object
+    char *zErrMsg = 0; // Error message returned by sqlite3_exec()
     //stringstream db_transaction_sql; // To build transaction SQL query
-    int rc;                          // Return state
-    int errorLevel = 0;              // Error state. Only for constructors (or fallback).
-                                     // Other non-constructors can directly return error code.
+    int rc;             // Return state
+    int errorLevel = 0; // Error state. Only for constructors (or fallback).
+                        // Other non-constructors can directly return error code.
 
 public:
     CygpmDatabase(const char *fileName);
     ~CygpmDatabase();
+    void open(const char *fileName); // Manually open database
 
     int createTable();                                        // Create basic table
     int parseAndBuildDatabase(const char *setupini_fileName); // Parse setup.ini, adding its data into database

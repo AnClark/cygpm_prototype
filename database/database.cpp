@@ -22,6 +22,11 @@ inline char *ltrim(char *source)
 
 CygpmDatabase::CygpmDatabase(const char *fileName)
 {
+    open(fileName);
+}
+
+void CygpmDatabase::open(const char *fileName)
+{
     /**
      * Open database
      */
