@@ -74,7 +74,7 @@ public:
      * - Manipulating dependencies
      */
 
-protected:
+private:
     void insertPackageInfo(CurrentPackageInfo *packageInfo);
     void insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo);
     inline void submitYAMLItem(string YAML_section, CurrentPackageInfo *pkg_info, stringstream &buff);
