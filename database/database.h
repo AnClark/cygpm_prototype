@@ -63,6 +63,16 @@ public:
     int findDependencies(vector<string> &dependency_list, const char *pkg_name, const char *version); // Find dependencies
 
     char *getNewestVersion(const char *pkg_name);
+    char *getShortDesc(const char *pkg_name);
+    char *getLongDesc(const char *pkg_name);
+    char *getCategory(const char *pkg_name);
+    char *getInstallPakPath(const char *pkg_name, const char *version);
+    char *getInstallPakSize(const char *pkg_name, const char *version);
+    char *getInstallPakSHA512(const char *pkg_name, const char *version);
+    char *getSourcePakPath(const char *pkg_name, const char *version);
+    char *getSourcePakSize(const char *pkg_name, const char *version);
+    char *getSourcePakSHA512(const char *pkg_name, const char *version);
+    vector<const char *> getPrevVersions(const char *pkg_name);
 
     int getErrorLevel();
     int getErrorCode();
@@ -84,4 +94,5 @@ private:
     int initTransaction();
     int commitTransaction();
     void execTransactionSQL(const char *sql_statement);
+    inline char *queryOneResult(const char *sql_statement);
 };

@@ -115,3 +115,226 @@ char *CygpmDatabase::getNewestVersion(const char *pkg_name)
     nIndex = nColumn;               // Initialize nIndex
     return rtrim(dbResult[nIndex]); // Trim trailing space, as findDependencies() doesn't trim spaces
 }
+
+char *CygpmDatabase::getShortDesc(const char *pkg_name)
+{
+    /* SQL query */
+    const char *SQL = R"(
+        SELECT SDESC FROM PKG_INFO WHERE PKG_NAME = '%s';
+    )";
+
+    char *query = new char[100 + strlen(SQL) + strlen(pkg_name)]; // Actual SQL query rendered by sprintf()
+    sprintf(query, SQL, pkg_name);
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getLongDesc(const char *pkg_name)
+{
+    /* SQL query */
+    const char *SQL = R"(
+        SELECT LDESC FROM PKG_INFO WHERE PKG_NAME = '%s';
+    )";
+
+    char *query = new char[100 + strlen(SQL) + strlen(pkg_name)]; // Actual SQL query rendered by sprintf()
+    sprintf(query, SQL, pkg_name);
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getCategory(const char *pkg_name)
+{
+    /* SQL query */
+    const char *SQL = R"(
+        SELECT CATEGORY FROM PKG_INFO WHERE PKG_NAME = '%s';
+    )";
+
+    char *query = new char[100 + strlen(SQL) + strlen(pkg_name)]; // Actual SQL query rendered by sprintf()
+    sprintf(query, SQL, pkg_name);
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getInstallPakPath(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT INSTALL_PAK_PATH FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getInstallPakSize(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT INSTALL_PAK_SIZE FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getInstallPakSHA512(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT INSTALL_PAK_SHA512 FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getSourcePakPath(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT SOURCE_PAK_PATH FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getSourcePakSize(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT SOURCE_PAK_SIZE FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+char *CygpmDatabase::getSourcePakSHA512(const char *pkg_name, const char *version = NULL)
+{
+    /** Build SQL statement */
+    const char *SQL = R"(
+        SELECT SOURCE_PAK_SHA512 FROM %s WHERE PKG_NAME = '%s' AND VERSION LIKE '%s';
+    )";
+
+    string s_version(version == NULL ? getNewestVersion(pkg_name) : version);
+    s_version += "%"; // Use wildcard to match possible trailing spaces
+
+    char *query = new char[120 + strlen(SQL) + strlen(pkg_name) + (version == NULL ? 0 : strlen(version))];
+    sprintf(query, SQL,
+            version == NULL ? "PKG_INFO" : "PREV_VERSIONS",
+            pkg_name,
+            s_version.c_str());
+
+    return queryOneResult(query);
+}
+
+vector<const char *> CygpmDatabase::getPrevVersions(const char *pkg_name)
+{
+    /* Variables */
+    vector<const char *> result; // Prev version list to be returned
+    char **dbResult;             // Results from sqlite3_get_table()
+    int nRow, nColumn;           // Row/Column count
+
+    int nIndex; // Current index of dbResult
+
+    /**
+     * Build SQL statement
+     */
+    const char *SQL_GET_PREV_VERSIONS = R"(
+        SELECT VERSION FROM PREV_VERSIONS WHERE PKG_NAME = '%s';
+    )";
+    char *query = new char[100 + strlen(SQL_GET_PREV_VERSIONS) + strlen(pkg_name)];
+    sprintf(query, SQL_GET_PREV_VERSIONS, pkg_name);
+
+    /**
+     * Execute SQL statement to get previous versions
+     */
+    rc = sqlite3_get_table(db, query, &dbResult, &nRow, &nColumn, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+
+        return result;
+    }
+
+    /**
+     * Parse dbResult.
+     */
+    nIndex = nColumn; // Initialize nIndex
+    for (int i = 0; i < nRow; i++)
+    {
+        result.push_back(rtrim(dbResult[nIndex])); // Add version number to list, trimming trailing spaces
+
+        nIndex++;
+    }
+
+    return result;
+}
+
+inline char *CygpmDatabase::queryOneResult(const char *sql_statement)
+{
+    /* Variables */
+    char **dbResult;   // Results from sqlite3_get_table()
+    int nRow, nColumn; // Row/Column count
+
+    int nIndex; // Current index of dbResult
+
+    /**
+     * Execute SQL statement to get required data
+     * In this method, you can only query one column and one row.
+     */
+    rc = sqlite3_get_table(db, sql_statement, &dbResult, &nRow, &nColumn, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "SQL error: " << zErrMsg << endl;
+
+        return NULL;
+    }
+
+    /**
+     * dbResult[index] is what we want.
+     */
+    nIndex = nColumn;               // Initialize nIndex
+    return rtrim(dbResult[nIndex]); // Trim trailing space, as findDependencies() doesn't trim spaces
+}
