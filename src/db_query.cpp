@@ -1,22 +1,5 @@
 #include "database.h"
 
-inline char *rtrim(char *source)
-{
-    for (int i = strlen(source) - 1; i >= 0 && isspace(source[i]); i--)
-        source[i] = '\0';
-
-    return source;
-}
-
-inline bool isInVector_string(vector<string> vector, const char *item)
-{
-    for (auto i = vector.begin(); i != vector.end(); i++)
-        if (i->compare(item) == 0)
-            return true;
-
-    return false;
-}
-
 int CygpmDatabase::findDependencies(vector<string> &dependency_list, const char *pkg_name, const char *version = NULL)
 {
     /**

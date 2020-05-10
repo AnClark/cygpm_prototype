@@ -1,14 +1,11 @@
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <string>
-#include <cctype>
-#include <iostream>
-#include <regex>
-#include <sqlite3.h>
+#ifndef DATABASE_H
+#define DATABASE_H
+
+#include "stdafx.hpp"
 
 #include "lex.export.h"
 #include "tokens.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -96,3 +93,5 @@ private:
     void execTransactionSQL(const char *sql_statement);
     inline char *queryOneResult(const char *sql_statement);
 };
+
+#endif

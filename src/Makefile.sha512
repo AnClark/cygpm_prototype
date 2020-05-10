@@ -1,0 +1,2 @@
+sha512.o: extlib/sha512/sha512.cpp
+	g++ -c $^

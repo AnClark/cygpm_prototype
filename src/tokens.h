@@ -10,6 +10,7 @@ typedef enum {
     T_Quotation_Mark,
     T_YAML_Key,
     T_Prev_Version_Mark,
+    T_Multiline_String,
     T_Word,
     T__Ignored
 } TokenType;

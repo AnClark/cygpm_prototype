@@ -11,15 +11,6 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName)
     return 0;
 }
 
-inline char *ltrim(char *source)
-{
-    char *p = source;
-    while (*p && isspace(*p))
-        p++;
-
-    return p;
-}
-
 CygpmDatabase::CygpmDatabase(const char *fileName)
 {
     open(fileName);
@@ -46,7 +37,7 @@ void CygpmDatabase::open(const char *fileName)
     /**
      * Optimize database - Store journal in memory
      */
-
+#if 0
     const char *SQL_PRAGMA_SET_JOURNAL_TO_MEMORY = R"(
         PRAGMA journal_mode = memory;
     )";
@@ -61,7 +52,7 @@ void CygpmDatabase::open(const char *fileName)
     {
         cerr << "Database: Journal set to memory" << endl;
     }
-
+#endif
     // Constructor doesn't support return values. So use errorLevel instead.
     errorLevel = 0;
 }
@@ -306,6 +297,14 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
             is_adding_a_previous_version = true;
             is_adding_a_YAML_section = false;
 
+            break;
+
+        case T_Multiline_String:
+            if(is_adding_a_YAML_section)
+            {
+                //cout << "Find string: " << yytext << endl;
+                buff.str(yytext);
+            }
             break;
 
         case T_Word:
