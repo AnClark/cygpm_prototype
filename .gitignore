@@ -2,6 +2,7 @@
 *.exe*
 *.o
 *.a
+*.gch
 
 # Local configurations
 .vscode
@@ -9,6 +10,7 @@
 # My drafts
 .drafts
 .backup
+.principle
 
 # Flex/bison temp files
 lex.yy.*
