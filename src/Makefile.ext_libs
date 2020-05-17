@@ -1,0 +1,5 @@
+sha512.o: extlib/sha512/sha512.cpp
+	g++ -c $^
+
+gzip_cpp.o: extlib/gzip_cpp/gzip_cpp.cc
+	g++ -c $^

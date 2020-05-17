@@ -1,6 +1,7 @@
 OBJECTS := \
 	lex.yy.o \
 	sha512.o \
+	gzip_cpp.o \
 	utils.o \
 	database.o \
 	db_query.o \
@@ -9,7 +10,7 @@ OBJECTS := \
 all: main
 
 main: $(OBJECTS)
-	g++ $^ -o $@ -static -lsqlite3 
+	g++ $^ -o $@ -static -lsqlite3 -lz
 
 main.o: main.cpp
 	g++ -c $<
@@ -32,7 +33,7 @@ lex.yy.c: setupini.l
 stdafx.hpp.gch: stdafx.hpp
 	g++ $<
 
-include Makefile.sha512
+include Makefile.ext_libs
 
 clean:
 	rm -f *.exe* *.o

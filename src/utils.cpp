@@ -55,35 +55,67 @@ string calculateFileSHA512(string fileName)
 
 int extractTextFromGzip(const char *fileName, vector<string> &result)
 {
-    result.clear(); // Initialize result
+    /**
+     * Clear result list
+     */
+    result.clear();
 
-    FILE *fp;                            // File handler
-    char *buffer;                        // Per-string buffer
-    char gzip_command[] = "gzip -adcq "; // Param -a: Output as ASCII
-                                         // Param -d: Decompress instead of compress
-                                         // Param -c: Decompress to stdout with original file untouched
-                                         // Param -q: Supress any possible warnings
+    /**
+     * Read in the whole GZip file
+     */
+    ifstream input_file;
+    char *buffer;
+    long length;
 
-    /* Check if file exists. Unexisted files will stuck popen(). */
-    if (!isFileExist(fileName))
+    /* Open & check if opening error */
+    input_file.open(fileName, ios_base::binary);
+    if (!input_file)
+        return CPM_FILE_ACCESS_ERROR;
+
+    /* Get file size */
+    input_file.seekg(0, ios::end);
+    length = input_file.tellg();
+    input_file.seekg(0, ios::beg);
+
+    /* Read file into buffer */
+    buffer = new char[length];
+    input_file.read(buffer, length);
+    input_file.close();
+
+    /**
+     * Decompress via libgzip_cpp
+     */
+    /* Allocate objects for decompression via gzip_cpp */
+    gzip::Data data = gzip::AllocateData(length); // Allocate data storage. You must use AllocateData() here.
+    gzip::Decomp decomp;
+    data->ptr = buffer;
+
+    /* Start decompression */
+    bool succ;
+    gzip::DataList out_data_list;
+    std::tie(succ, out_data_list) = decomp.Process(data); // C++ feature. You can return more than 1 values via std::tuple,
+                                                          // then use std::tie() to receive each return value,
+                                                          // storing them to variables correspondingly.
+    if (!succ)
     {
-        perror("Target GZip file doesn't exist.");
-        return CPM_FILE_NOT_EXIST;
+        // Failed to decompress data.
+        fputs("Failed to decompress!", stderr);
+        return CPM_DECOMPRESS_ERROR;
     }
+    gzip::Data out_data = gzip::ExpandDataList(out_data_list); // Expand element list to one element
 
-    /* Use popen() to obtain GZip's output */
-    if ((fp = popen(strcat(gzip_command, fileName), "r")) == NULL)
-    {
-        perror("Failed to execute gzip. Have you installed gzip?");
-        return CPM_EXTERNAL_PROGRAM_FAILED;
-    }
+    /**
+     * Split decompressed text by lines
+     * 
+     * Algorithm referenced from [pezy@SegmentFault]: https://segmentfault.com/a/1190000002483483
+     */
+    istringstream iss(string(out_data->ptr)); // Push decompressed data into stringstream
 
-    /* Read in decompressed data as string */
-    while (fgets(buffer, 1024, fp))
-        result.push_back(buffer);
-
-    /* Close file */
-    fclose(fp);
+    for (string item; getline(iss, item, '\n');) // Use getline() to parse stream into lines
+        if (item.empty())
+            continue;
+        else
+            result.push_back(item);
 
     return 0;
 }

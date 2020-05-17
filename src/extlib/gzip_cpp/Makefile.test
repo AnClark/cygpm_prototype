@@ -1,0 +1,13 @@
+.PHONY: test.exe
+
+test.exe: gzip_cpp.o test.o
+	g++ $^ -lz -o $@
+
+test.o: test.cc
+	g++ -c $<
+
+gzip_cpp.o: gzip_cpp.cc
+	g++ -c $<
+
+clean:
+	rm -f *.o

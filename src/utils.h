@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "extlib/sha512/sha512.h"
+#include "extlib/gzip_cpp/gzip_cpp.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ enum InstallerErrors
     CPM_OK = 0,
     CPM_FILE_NOT_EXIST = 16,
     CPM_EXTERNAL_PROGRAM_FAILED,
+    CPM_DECOMPRESS_ERROR,
     CPM_UNEXPECTED_ERROR
 };
 
