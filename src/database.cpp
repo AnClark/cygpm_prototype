@@ -87,11 +87,9 @@ int CygpmDatabase::createTable()
             "CATEGORY"	TEXT,
             "REQUIRES__RAW"	TEXT,
             "VERSION"	TEXT,
-            "_INSTALL__RAW"	TEXT NOT NULL,
             "INSTALL_PAK_PATH"	TEXT,
             "INSTALL_PAK_SIZE"	TEXT,
             "INSTALL_PAK_SHA512"	TEXT,
-            "_SOURCE__RAW"	TEXT,
             "SOURCE_PAK_PATH"	TEXT,
             "SOURCE_PAK_SIZE"	TEXT,
             "SOURCE_PAK_SHA512"	TEXT,
@@ -125,11 +123,9 @@ int CygpmDatabase::createTable()
         CREATE TABLE IF NOT EXISTS "PREV_VERSIONS" (
             "PKG_NAME"	TEXT NOT NULL,
             "VERSION"	TEXT NOT NULL,
-            "_INSTALL__RAW"	TEXT NOT NULL,
             "INSTALL_PAK_PATH"	TEXT,
             "INSTALL_PAK_SIZE"	TEXT,
             "INSTALL_PAK_SHA512"	TEXT,
-            "_SOURCE__RAW"	TEXT,
             "SOURCE_PAK_PATH"	TEXT,
             "SOURCE_PAK_SIZE"	TEXT,
             "SOURCE_PAK_SHA512"	TEXT,
@@ -300,7 +296,7 @@ int CygpmDatabase::parseAndBuildDatabase(const char *setupini_fileName)
             break;
 
         case T_Multiline_String:
-            if(is_adding_a_YAML_section)
+            if (is_adding_a_YAML_section)
             {
                 //cout << "Find string: " << yytext << endl;
                 buff.str(yytext);
@@ -539,10 +535,10 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
     /* Pre-define SQL query */
     const char *SQL_INSERT_PACKAGE_INFO = R"(
         INSERT INTO "PKG_INFO" (PKG_NAME, SDESC, LDESC, CATEGORY, REQUIRES__RAW, VERSION, 
-                                _INSTALL__RAW, INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
-                                _SOURCE__RAW, SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
+                                INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
+                                SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
                                 DEPENDS2__RAW)
-        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s');
+        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');
     )";
 
     /* Final SQL to generate */
@@ -573,11 +569,9 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
             packageInfo->category.c_str(),
             packageInfo->requires__raw.c_str(),
             packageInfo->version.c_str(),
-            packageInfo->install__raw.c_str(),
             install_pak_path,
             install_pak_size,
             install_pak_sha512,
-            packageInfo->source__raw.c_str(),
             source_pak_path,
             source_pak_size,
             source_pak_sha512,
@@ -592,10 +586,10 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     /* Pre-define SQL query */
     const char *SQL_INSERT_PREV_PACKAGE_INFO = R"(
         INSERT INTO "PREV_VERSIONS" (PKG_NAME, VERSION, 
-                                    _INSTALL__RAW, INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
-                                    _SOURCE__RAW, SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
+                                    INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
+                                    SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
                                     DEPENDS2__RAW)
-        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');
+        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s');
     )";
 
     /* Final SQL to generate */
@@ -622,11 +616,9 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     sprintf(target_sql, SQL_INSERT_PREV_PACKAGE_INFO,
             pkg_name,
             prevPackageInfo->version.c_str(),
-            prevPackageInfo->install__raw.c_str(),
             install_pak_path,
             install_pak_size,
             install_pak_sha512,
-            prevPackageInfo->source__raw.c_str(),
             source_pak_path,
             source_pak_size,
             source_pak_sha512,
