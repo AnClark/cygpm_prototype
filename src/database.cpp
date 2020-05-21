@@ -663,9 +663,21 @@ inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char 
     /* SQL statements */
     const char *SQL_INSERT_DEPENDENCY_MAP_ITEM = R"(
         INSERT INTO "DEPENDENCY_MAP" (PKG_NAME, VERSION, DEPENDS_ON)
-        VALUES ('%s', '%s', '%s');
-    )";               // Pre-defined SQL query
-    char *target_sql; // Final SQL to generate
+        VALUES (:pkg_name, :version, :depends_on);
+    )"; // Pre-defined SQL query
+
+    sqlite3_stmt *stmt = NULL; // SQLite statement
+    int rc;                    // Return value for command
+
+    /**
+     * Prepare statement binding
+     */
+    rc = sqlite3_prepare_v2(db, SQL_INSERT_DEPENDENCY_MAP_ITEM, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "! Failed to prepare binding for " << pkg_name << endl;
+        return;
+    }
 
     /**
      * Parse requires__raw
@@ -683,18 +695,32 @@ inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char 
     // Get the remainders
     while (token != NULL)
     {
-        // Calculate how much space should target_sql have
-        target_sql = new char[100 + strlen(SQL_INSERT_DEPENDENCY_MAP_ITEM) + strlen(pkg_name) + strlen(token)];
+        /* Add a dependency item to database */
+        // Bind columns
+        SQLITE_BIND_MY_COLUMN(":pkg_name", pkg_name);
+        SQLITE_BIND_MY_COLUMN(":version", version);
+        SQLITE_BIND_MY_COLUMN(":depends_on", token);
 
-        // Form SQL statement
-        sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, version, token);
+        // Step (execute) the rendered statement
+        rc = sqlite3_step(stmt);
+        if ((rc != SQLITE_DONE) && (rc != SQLITE_ROW))
+        {
+            cerr << "! Failed to execute binding for " << pkg_name << ": " << sqlite3_errmsg(db) << endl;
+            return;
+        }
 
-        // Add generated SQL to buffer
-        execTransactionSQL(target_sql);
+        // Reset statement for the next execution
+        // If not reset, SQLite will always use the previous values.
+        sqlite3_reset(stmt);
 
-        // Get the next remainder
+        /* Get the next remainder */
         token = strtok(NULL, splitter);
     }
+
+    /**
+     * Finalize (clean up) the statement
+     */
+    sqlite3_finalize(stmt);
 }
 
 inline void CygpmDatabase::parseDepends2(char *pkg_name, char *version, char *depends2__raw)
@@ -702,12 +728,24 @@ inline void CygpmDatabase::parseDepends2(char *pkg_name, char *version, char *de
     /* SQL statements */
     const char *SQL_INSERT_DEPENDENCY_MAP_ITEM = R"(
         INSERT INTO "DEPENDENCY_MAP" (PKG_NAME, VERSION, DEPENDS_ON)
-        VALUES ('%s', '%s', '%s');
-    )";               // Pre-defined SQL query
-    char *target_sql; // Final SQL to generate
+        VALUES (:pkg_name, :version, :depends_on);
+    )"; // Pre-defined SQL query
+
+    sqlite3_stmt *stmt = NULL; // SQLite statement
+    int rc;                    // Return value for command
 
     /**
-     * Parse depends2__raw
+     * Prepare statement binding
+     */
+    rc = sqlite3_prepare_v2(db, SQL_INSERT_DEPENDENCY_MAP_ITEM, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "! Failed to prepare binding for " << pkg_name << endl;
+        return;
+    }
+
+    /**
+     * Parse requires__raw
      */
     const char *splitter = ","; // strtok()'s splitter
     char *token;                // Child string
@@ -722,18 +760,32 @@ inline void CygpmDatabase::parseDepends2(char *pkg_name, char *version, char *de
     // Get the remainders
     while (token != NULL)
     {
-        // Calculate how much space should target_sql have
-        target_sql = new char[100 + strlen(SQL_INSERT_DEPENDENCY_MAP_ITEM) + strlen(pkg_name) + strlen(token)];
+        /* Add a dependency item to database */
+        // Bind columns
+        SQLITE_BIND_MY_COLUMN(":pkg_name", pkg_name);
+        SQLITE_BIND_MY_COLUMN(":version", version);
+        SQLITE_BIND_MY_COLUMN(":depends_on", ltrim(token));
 
-        // Form SQL statement
-        sprintf(target_sql, SQL_INSERT_DEPENDENCY_MAP_ITEM, pkg_name, version, ltrim(token));
+        // Step (execute) the rendered statement
+        rc = sqlite3_step(stmt);
+        if ((rc != SQLITE_DONE) && (rc != SQLITE_ROW))
+        {
+            cerr << "! Failed to execute binding for " << pkg_name << ": " << sqlite3_errmsg(db) << endl;
+            return;
+        }
 
-        // Add generated SQL to buffer
-        execTransactionSQL(target_sql);
+        // Reset statement for the next execution
+        // If not reset, SQLite will always use the previous values.
+        sqlite3_reset(stmt);
 
-        // Get the next remainder
+        /* Get the next remainder */
         token = strtok(NULL, splitter);
     }
+
+    /**
+     * Finalize (clean up) the statement
+     */
+    sqlite3_finalize(stmt);
 }
 
 int CygpmDatabase::initTransaction()
