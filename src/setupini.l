@@ -21,7 +21,7 @@ MULTILINE_STRING    (["][^"]*["])
 
 ^{PACKAGE_NAME}     { return T_Package_Name;                              }
 "[prev]"            { return T_Prev_Version_Mark;                         }
-{MULTILINE_STRING}  { yytext = str_preprocessor(yytext);  return T_Multiline_String;     }
+{MULTILINE_STRING}  { /* yytext = str_preprocessor(yytext); */  return T_Multiline_String;     }
 ^{YAML_KEY}         { return T_YAML_Key;                                  }
 {WORD}              { return T_Word;                                      }
 
@@ -39,6 +39,8 @@ MULTILINE_STRING    (["][^"]*["])
 /**
  * Preprocess strings for SQLite.
  * By default, SQLite doesn't support "'" in queries.
+ * UPDATE: No need to preprocess if you're using SQLite statement binding.
+ *         SQLite will process them automatically.
  */
 char* str_preprocessor(char *src)
 {

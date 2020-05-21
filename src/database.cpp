@@ -533,17 +533,27 @@ inline void CygpmDatabase::submitYAMLItem_PrevVersion(string YAML_section, Curre
 
 void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
 {
-    /* Pre-define SQL query */
+    /* Pre-defined SQL query */
     const char *SQL_INSERT_PACKAGE_INFO = R"(
         INSERT INTO "PKG_INFO" (PKG_NAME, SDESC, LDESC, CATEGORY, REQUIRES__RAW, VERSION, 
                                 INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
                                 SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
                                 DEPENDS2__RAW)
-        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');
+        VALUES (:pkg_name, :sdesc, :ldesc, :category, :requires__raw, :version, 
+                :install_pak_path, :install_pak_size, :install_pak_sha512, 
+                :source_pak_path, :source_pak_size, :source_pak_sha512, 
+                :depends2__raw);
     )";
+    sqlite3_stmt *stmt = NULL; // SQLite statement
+    int rc;                    // Return value for command
 
-    /* Final SQL to generate */
-    char *target_sql;
+    /* Prepare statement binding */
+    rc = sqlite3_prepare_v2(db, SQL_INSERT_PACKAGE_INFO, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "! Failed to prepare binding for " << packageInfo->pkg_name << endl;
+        return;
+    }
 
     /* Preprocess package name data */
     char pkg_name[packageInfo->pkg_name.length() + 1];
@@ -558,43 +568,58 @@ void CygpmDatabase::insertPackageInfo(CurrentPackageInfo *packageInfo)
     sscanf(packageInfo->install__raw.c_str(), "%s %s %s", install_pak_path, install_pak_size, install_pak_sha512);
     sscanf(packageInfo->source__raw.c_str(), "%s %s %s", source_pak_path, source_pak_size, source_pak_sha512);
 
-    /* Calculate how much space should target_sql have */
-    int len_target_sql = 500 + LEN_INSTALL__RAW * 3 + LEN_SOURCE__RAW * 3 + strlen(SQL_INSERT_PACKAGE_INFO) + packageInfo->pkg_name.length() + packageInfo->category.length() + packageInfo->depends2__raw.length() + packageInfo->install__raw.length() + packageInfo->ldesc.length() + packageInfo->requires__raw.length() + packageInfo->sdesc.length() + packageInfo->source__raw.length() + packageInfo->version.length();
-    target_sql = new char[len_target_sql];
+    /* Bind sections with values */
+    // Every command here is a macro of sqlite3_bind_text().
+    SQLITE_BIND_MY_COLUMN(":pkg_name", pkg_name);
+    SQLITE_BIND_MY_COLUMN(":sdesc", packageInfo->sdesc.c_str());
+    SQLITE_BIND_MY_COLUMN(":ldesc", packageInfo->ldesc.c_str());
+    SQLITE_BIND_MY_COLUMN(":category", packageInfo->category.c_str());
+    SQLITE_BIND_MY_COLUMN(":requires__raw", packageInfo->requires__raw.c_str());
+    SQLITE_BIND_MY_COLUMN(":version", packageInfo->version.c_str());
+    SQLITE_BIND_MY_COLUMN(":install_pak_path", install_pak_path);
+    SQLITE_BIND_MY_COLUMN(":install_pak_size", install_pak_size);
+    SQLITE_BIND_MY_COLUMN(":install_pak_sha512", install_pak_sha512);
+    SQLITE_BIND_MY_COLUMN(":source_pak_path", source_pak_path);
+    SQLITE_BIND_MY_COLUMN(":source_pak_size", source_pak_size);
+    SQLITE_BIND_MY_COLUMN(":source_pak_sha512", source_pak_sha512);
+    SQLITE_BIND_MY_COLUMN(":depends2__raw", packageInfo->depends2__raw.c_str());
 
-    /* Concatenate SQL query */
-    sprintf(target_sql, SQL_INSERT_PACKAGE_INFO,
-            pkg_name,
-            packageInfo->sdesc.c_str(),
-            packageInfo->ldesc.c_str(),
-            packageInfo->category.c_str(),
-            packageInfo->requires__raw.c_str(),
-            packageInfo->version.c_str(),
-            install_pak_path,
-            install_pak_size,
-            install_pak_sha512,
-            source_pak_path,
-            source_pak_size,
-            source_pak_sha512,
-            packageInfo->depends2__raw.c_str());
+    /* Step (execute) the rendered statement */
+    rc = sqlite3_step(stmt);
+    if ((rc != SQLITE_DONE) && (rc != SQLITE_ROW))
+    {
+        cerr << "! Failed to execute binding for " << pkg_name << ": " << sqlite3_errmsg(db) << endl;
+        return;
+    }
 
-    /* Commit SQL query */
-    execTransactionSQL(target_sql);
+    /* Finalize (clean up) the statement */
+    sqlite3_finalize(stmt);
 }
 
 void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInfo)
 {
-    /* Pre-define SQL query */
+    /* Pre-defined SQL query */
     const char *SQL_INSERT_PREV_PACKAGE_INFO = R"(
         INSERT INTO "PREV_VERSIONS" (PKG_NAME, VERSION, 
                                     INSTALL_PAK_PATH, INSTALL_PAK_SIZE, INSTALL_PAK_SHA512, 
                                     SOURCE_PAK_PATH, SOURCE_PAK_SIZE, SOURCE_PAK_SHA512, 
                                     DEPENDS2__RAW)
-        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s');
+        VALUES (:pkg_name, :version, 
+                :install_pak_path, :install_pak_size, :install_pak_sha512, 
+                :source_pak_path, :source_pak_size, :source_pak_sha512, 
+                :depends2__raw);
     )";
 
-    /* Final SQL to generate */
-    char *target_sql;
+    sqlite3_stmt *stmt = NULL; // SQLite statement
+    int rc;                    // Return value for command
+
+    /* Prepare statement binding */
+    rc = sqlite3_prepare_v2(db, SQL_INSERT_PREV_PACKAGE_INFO, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        cerr << "! Failed to prepare binding for " << prevPackageInfo->pkg_name << endl;
+        return;
+    }
 
     /* Preprocess package name data */
     char pkg_name[prevPackageInfo->pkg_name.length() + 1];
@@ -609,24 +634,28 @@ void CygpmDatabase::insertPrevPackageInfo(CurrentPrevPackageInfo *prevPackageInf
     sscanf(prevPackageInfo->install__raw.c_str(), "%s %s %s", install_pak_path, install_pak_size, install_pak_sha512);
     sscanf(prevPackageInfo->source__raw.c_str(), "%s %s %s", source_pak_path, source_pak_size, source_pak_sha512);
 
-    /* Calculate how much space should target_sql have */
-    int len_target_sql = 500 + LEN_INSTALL__RAW * 3 + LEN_SOURCE__RAW * 3 + strlen(SQL_INSERT_PREV_PACKAGE_INFO) + prevPackageInfo->depends2__raw.length() + prevPackageInfo->install__raw.length() + prevPackageInfo->pkg_name.length() + prevPackageInfo->source__raw.length() + prevPackageInfo->version.length();
-    target_sql = new char[len_target_sql];
+    /* Bind sections with values */
+    // Every command here is a macro of sqlite3_bind_text().
+    SQLITE_BIND_MY_COLUMN(":pkg_name", pkg_name);
+    SQLITE_BIND_MY_COLUMN(":version", prevPackageInfo->version.c_str());
+    SQLITE_BIND_MY_COLUMN(":install_pak_path", install_pak_path);
+    SQLITE_BIND_MY_COLUMN(":install_pak_size", install_pak_size);
+    SQLITE_BIND_MY_COLUMN(":install_pak_sha512", install_pak_sha512);
+    SQLITE_BIND_MY_COLUMN(":source_pak_path", source_pak_path);
+    SQLITE_BIND_MY_COLUMN(":source_pak_size", source_pak_size);
+    SQLITE_BIND_MY_COLUMN(":source_pak_sha512", source_pak_sha512);
+    SQLITE_BIND_MY_COLUMN(":depends2__raw", prevPackageInfo->depends2__raw.c_str());
 
-    /* Concatenate SQL query */
-    sprintf(target_sql, SQL_INSERT_PREV_PACKAGE_INFO,
-            pkg_name,
-            prevPackageInfo->version.c_str(),
-            install_pak_path,
-            install_pak_size,
-            install_pak_sha512,
-            source_pak_path,
-            source_pak_size,
-            source_pak_sha512,
-            prevPackageInfo->depends2__raw.c_str());
+    /* Step (execute) the rendered statement */
+    rc = sqlite3_step(stmt);
+    if ((rc != SQLITE_DONE) && (rc != SQLITE_ROW))
+    {
+        cerr << "! Failed to execute binding for " << pkg_name << ": " << sqlite3_errmsg(db) << endl;
+        return;
+    }
 
-    /* Commit SQL query */
-    execTransactionSQL(target_sql);
+    /* Finalize (clean up) the statement */
+    sqlite3_finalize(stmt);
 }
 
 inline void CygpmDatabase::parseRequiresRaw(char *pkg_name, char *version, char *requires__raw)

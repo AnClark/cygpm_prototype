@@ -12,6 +12,16 @@ using namespace std;
 #define SQLITE_ERR_RETURN             \
     errorLevel = sqlite3_errcode(db); \
     return sqlite3_errcode(db);
+#define SQLITE_BIND_MY_COLUMN(zName, data) \
+    sqlite3_bind_text(stmt, sqlite3_bind_parameter_index(stmt, zName), data, -1, SQLITE_STATIC); // Macro for sqlite3_bind_text() to make code more clearly,                                      \
+                                                                                                 // as I'll bind more than 10 parameters.                                                         \
+                                                                                                 // @param1: A statement object.                                                                  \
+                                                                                                 // @param2: Index of bound parameter index. This is specified by sqlite3_bind_parameter_index(). \
+                                                                                                 //          @zName is the index placehoder. Format is ":name".                                                                                     \
+                                                                                                 // @param3: Text data to fill with. Will be preprocessed automatically. \
+                                                                                                 // @param4: Length of text data. Set to negative value to let SQLite calculate it.                     \
+                                                                                                 // @param5: a destructor used to dispose of the BLOB or string                                      \
+                                                                                                 //          when SQLite finishes with it. Use SQLITE_STATIC here.
 
 #define STR_EQUAL(x, y) strcmp(x, y) == 0
 #define YAML_SECTION_IS(x) YAML_section.compare(x) == 0
